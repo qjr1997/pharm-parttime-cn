@@ -33,6 +33,7 @@
 | `data/timeline.js` | 时间窗口 | 官方流程节点（报名、初试、复试、录取）以当年研招网公告为准；其余节点每年复核 |
 | `data/calendar.js` | 时间窗口（日历） | 与 `timeline.js` 同步；固定月份、动作、关联事项 |
 | `data/actions.js` | 总览（十件事） | 建议按累计经验修订，不随年份变化的部分保持稳定 |
+| `route.html` | 路线规划与年龄窗口 | 主路线、备选、年龄窗口与岔路口；随年龄口径与院校变化修订，事实部分须回到数据页核对 |
 | `outreach.html` / `internal.html` / `agreement.html` | 套磁 / 内部打听 / 定向协议 | 经验建议与方法论页面；除非发现明显错误或新增重要流程，不频繁改动 |
 | `data/changelog.js` / `data/meta.js` | 更新日志 / 全站 | 每月必须追加 |
 | `docs/` | —— | 数据结构变化时才改；改前先改 `SCHEMA.md`，再改页面 |

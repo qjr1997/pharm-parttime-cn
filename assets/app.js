@@ -306,6 +306,7 @@
     html += '<h1 class="hero-title">' + esc(meta.siteTitle || "长三角非全日制药学硕士资料库") + "</h1>";
     html += '<p class="hero-lede">' + esc(meta.intro || "") + "</p>";
     html += '<div class="hero-actions chips">' +
+      '<a class="chip" href="route.html">路线规划与年龄窗口</a>' +
       '<a class="chip" href="schools.html">院校对比 <small>' + schools.length + " 所招生</small></a>" +
       '<a class="chip" href="advisors.html">优先联系导师 <small>' + priorityCount + " 位</small></a>" +
       '<a class="chip" href="#actions">现在就能做的十件事</a>' +
@@ -324,6 +325,7 @@
     html += "</div></section>";
 
     var entries = [
+      { k: "路线", t: "路线规划与年龄窗口", d: "一条主路线、两条备选、年龄窗口口径与剩余次数、四个岔路口的判断标准。", c: "主路线 + 两条备选", href: "route.html" },
       { k: "院校", t: "院校对比与详情", d: "按地区筛选，查看学制、学费、上课方式、定向要求、历年分数与录取。", c: schools.length + " 所招生 · " + excl.length + " 所排除", href: "schools.html" },
       { k: "导师", t: "导师名录", d: "按研究方向与体系内背景筛选，附优先联系顺序与客观排序理由。", c: adv.length + " 位", href: "advisors.html" },
       { k: "行动", t: "套磁指引", d: "四个联系时机、渠道对比、三版可直接改的邮件、导师提问与禁忌。", c: "3 版邮件", href: "outreach.html" },
