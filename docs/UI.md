@@ -237,3 +237,11 @@
 - 主要断点 720px / 960px，已由 CSS 处理；新页面直接使用上表组件即可。
 - 表格在窄屏横向滚动，不要手工压缩列宽。
 - 长英文链接由 `.src-item` 自动断行，不要另加样式。
+
+## 2026.11.3 阅读层级（本页目录与折叠）
+
+- **本页目录**：`assets/app.js` 的 `buildToc()` 在 `main` 下方生成粘性 `.toc-bar`，条目取自 `main .section > .wrap > .section-head h2`（编号 + 标题）。右侧「展开全部 / 收起全部」按钮切换所有 `details.sec-acc`。
+- **分区折叠**：`collapseSections(opened)` 把每个 `.section` 的 `.section-head` 转成 `<summary class="section-head">`，其后所有内容包进 `<div class="sec-acc-body">`。默认展开哪些分区由 `assets/app.js` 的 `PAGE_OPEN` 决定（键为 `body[data-page]`，值为分区下标数组）。新增页面或调整顺序时同步改这里。
+- **列表折叠**：长列表统一用 `details.acc-item`，摘要行用 `.acc-sum`（`.sum-main`/`.sum-name`/`.sum-sub`/`.sum-meta`），正文用 `.acc-body`。院校、导师、岗位、证书、时间线阶段、排除院校都已按此改造；纯静态页（route/outreach/internal/agreement）的分区由 `collapseSections` 自动处理，无需额外标记。
+- **锚点与展开**：`#school-xxx` 等锚点会经 `openAncestors()` 展开所在折叠；`hashOpen()` 处理直接打开带锚点的链接。新增折叠容器时保持 `id` 在 `details` 元素上。
+- **改数据的边界**：折叠只影响展示，不改变渲染函数取字段的方式；新增数据字段仍需同步 `docs/SCHEMA.md` 与 `scripts/check.js`。

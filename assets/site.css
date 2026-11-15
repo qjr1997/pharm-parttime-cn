@@ -868,3 +868,219 @@ pre.tpl {
 .badge--updated { background: var(--amber-soft); border-color: #e3d2b0; color: var(--amber); }
 
 .nowrap { white-space: nowrap; }
+
+/* ============================================================
+   2026.11.3 阅读层级：本页目录 / 分区折叠 / 列表折叠
+   ============================================================ */
+
+html { scroll-padding-top: 96px; }
+
+.toc-bar {
+  position: sticky;
+  top: 44px;
+  z-index: 19;
+  background: rgba(251, 250, 248, 0.97);
+  border-bottom: 1px solid var(--line);
+}
+.toc {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.toc::-webkit-scrollbar { display: none; }
+.toc-label {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  padding-right: 14px;
+  white-space: nowrap;
+}
+.toc a {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  padding: 9px 0;
+  margin-right: 16px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.toc a:hover { color: var(--ink); border-bottom-color: var(--line-2); }
+.toc-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 1px 8px;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+.toc-btn:hover { color: var(--ink); border-color: var(--line-2); }
+
+/* 分区折叠：标题与导语始终可见，作为折叠条 */
+details.sec-acc { border: 0; }
+details.sec-acc > summary.section-head {
+  list-style: none;
+  cursor: pointer;
+  margin: 0;
+  position: relative;
+  padding-right: 68px;
+}
+details.sec-acc > summary.section-head::-webkit-details-marker { display: none; }
+details.sec-acc > summary.section-head::after {
+  content: "展开";
+  position: absolute;
+  right: 0;
+  top: 16px;
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 1px 8px;
+  letter-spacing: 0.04em;
+}
+details.sec-acc[open] > summary.section-head { margin-bottom: 26px; }
+details.sec-acc[open] > summary.section-head::after { content: "收起"; }
+details.sec-acc > summary.section-head:hover::after { color: var(--ink); border-color: var(--line-2); }
+
+/* 列表折叠：统一摘要行 */
+details.acc-item { display: block; }
+details.acc-item > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details.acc-item > summary::-webkit-details-marker { display: none; }
+summary.acc-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 14px;
+}
+summary.acc-sum .sum-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  min-width: 0;
+}
+summary.acc-sum .sum-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+summary.acc-sum .sum-sub { font-size: 12.5px; color: var(--muted); }
+summary.acc-sum .sum-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+summary.acc-sum:hover .sum-name { color: var(--accent-ink); }
+details.acc-item[open] > summary { background: #fdfcf9; }
+
+details.school, details.adv, details.job, details.card.cert { padding: 0; }
+details.school > summary.acc-sum { padding: 20px 26px; }
+details.school[open] > summary.acc-sum { border-bottom: 1px dotted var(--line); }
+details.school > .acc-body { padding: 0 26px 24px; }
+details.adv > summary.acc-sum { padding: 16px 20px; }
+details.adv[open] > summary.acc-sum { border-bottom: 1px dotted var(--line); }
+details.adv > .acc-body { padding: 14px 20px 18px; }
+details.job > summary.acc-sum { padding: 15px 18px; }
+details.job[open] > summary.acc-sum { border-bottom: 1px dotted var(--line); }
+details.job > .acc-body { padding: 14px 18px 16px; }
+details.card.cert > summary.acc-sum { padding: 18px 24px; }
+details.card.cert[open] > summary.acc-sum { border-bottom: 1px solid var(--line); }
+details.card.cert > .acc-body { padding: 16px 24px 20px; }
+details.job + details.job, details.school + details.school { margin-top: 12px; }
+
+/* 判断小字 */
+.judge { font-size: 12.5px; color: var(--muted); }
+
+/* 行内来源链接（紧凑表格用） */
+.src-inline {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--accent-ink);
+  margin: 0 8px 2px 0;
+  border-bottom: 1px dotted rgba(47, 95, 86, 0.3);
+}
+.src-inline:hover { border-bottom-color: var(--accent); }
+
+/* 排除院校折叠列表 */
+.excl-list { margin-top: 4px; }
+.excl-list details.excl { border-top: 1px solid var(--line); }
+.excl-list details.excl:last-child { border-bottom: 1px solid var(--line); }
+.excl-list details.excl > summary.acc-sum { padding: 13px 2px; }
+.excl-list details.excl > .acc-body { padding: 2px 2px 18px; }
+
+/* 首页紧凑入口列表 */
+.entry-list { margin-top: 16px; border-top: 1px solid var(--line); }
+.entry-line {
+  display: grid;
+  grid-template-columns: 210px 1fr 120px;
+  gap: 16px;
+  align-items: baseline;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+.entry-line:hover { background: #fdfcf9; }
+.el-title { font-size: 14.5px; font-weight: 600; }
+.el-desc { font-size: 13px; color: var(--ink-2); }
+.el-count { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 时间线节点折叠 */
+details.tl-phase > summary.phase-head { list-style: none; cursor: pointer; margin-bottom: 0; }
+details.tl-phase > summary.phase-head::-webkit-details-marker { display: none; }
+details.tl-phase[open] > summary.phase-head { margin-bottom: 10px; }
+
+@media (max-width: 720px) {
+  .toc a { font-size: 12px; margin-right: 13px; }
+  .toc-label { display: none; }
+  details.school > summary.acc-sum { padding: 16px 18px; }
+  details.school > .acc-body { padding: 0 18px 18px; }
+  details.card.cert > summary.acc-sum { padding: 14px 16px; }
+  details.card.cert > .acc-body { padding: 12px 16px 16px; }
+  details.adv > summary.acc-sum, details.job > summary.acc-sum { padding: 13px 14px; }
+  details.adv > .acc-body, details.job > .acc-body { padding: 12px 14px 14px; }
+  summary.acc-sum .sum-name { font-size: 16px; }
+  .entry-line { grid-template-columns: 1fr; gap: 2px; padding: 12px 2px; }
+  .el-count { text-align: left; }
+}
+
+/* 2026.11.3 分区折叠：标题作为 summary，右侧展开提示 */
+details.sec-acc > summary.section-head { position: relative; cursor: pointer; list-style: none; padding-right: 96px; }
+details.sec-acc > summary.section-head::-webkit-details-marker { display: none; }
+details.sec-acc > summary.section-head::marker { content: ""; }
+details.sec-acc > summary.section-head h2 { margin-top: 0; }
+details.sec-acc > summary.section-head::after {
+  content: "展开 ▾"; position: absolute; right: 0; top: 10px;
+  font-size: 12px; line-height: 1.6; letter-spacing: 0.04em;
+  color: var(--muted); background: var(--card);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
+}
+details.sec-acc[open] > summary.section-head::after { content: "收起 ▴"; }
+.sec-acc-body { padding-top: 6px; }
+@media (max-width: 720px) {
+  details.sec-acc > summary.section-head { padding-right: 84px; }
+  details.sec-acc > summary.section-head::after { top: 6px; }
+}
+
+/* 2026.11.3 移动端导航换行，避免右侧链接被截断 */
+@media (max-width: 720px) {
+  .site-nav .wrap { flex-wrap: wrap; row-gap: 2px; column-gap: 14px; padding-top: 8px; padding-bottom: 8px; }
+  .site-nav a { font-size: 13px; }
+  .site-nav::after { display: none; }
+}
+
+/* 2026.11.3 目录条横向滚动（长标题页） */
+.toc { overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; }
+.toc::-webkit-scrollbar { display: none; }
+.toc a, .toc .toc-label, .toc-btn { flex: 0 0 auto; }

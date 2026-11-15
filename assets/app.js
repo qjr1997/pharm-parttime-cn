@@ -89,6 +89,19 @@
     return '<div class="src"><div class="src-title">' + esc(opts.title || "出处") + "</div><ul>" + items + "</ul></div>";
   }
 
+  function shortText(s, n) {
+    s = String(s || "");
+    return s.length > (n || 22) ? s.slice(0, (n || 22)) + "…" : s;
+  }
+
+  function srcInline(list, max) {
+    if (!list || !list.length) return MISS;
+    return list.slice(0, max || 2).map(function (s) {
+      var label = (s.type === "official" ? "官方" : "第三方") + "·" + shortText(s.title, 20);
+      return '<a class="src-inline" href="' + esc(s.url) + '" target="_blank" rel="noopener" title="' + esc(s.title) + '">' + esc(label) + "</a>";
+    }).join(" ");
+  }
+
   function conflictsHTML(list, opts) {
     if (!Array.isArray(list) || !list.length) return "";
     var title = (opts && opts.title) || "来源冲突 · 未作取舍";
@@ -338,15 +351,20 @@
       { k: "核验", t: "来源与待核实", d: "全部出处链接、来源冲突汇总，以及需要打电话核实的字段清单。", c: sStats.total + " 条来源", href: "sources.html" },
       { k: "记录", t: "更新日志", d: "每一轮改了什么、哪些条目新增或覆盖。", c: "按月追加", href: "changelog.html" }
     ];
-    html += sectionOpen() + sectionHead("01", "资料库入口", "按需要查的部分进入；每页顶部都有筛选与口径说明。");
-    html += '<div class="entry-grid">' + entries.map(function (e) {
+    var featured = entries.slice(0, 3);
+    var rest = entries.slice(3);
+    html += sectionOpen() + sectionHead("01", "资料库入口", "先看三页建立框架，其余按需查；每页顶部都有本页目录与筛选。");
+    html += '<div class="entry-grid">' + featured.map(function (e) {
       return '<a class="entry" href="' + e.href + '"><div class="entry-k">' + esc(e.k) + '</div><div class="entry-title">' + esc(e.t) +
         '</div><p class="entry-desc">' + esc(e.d) + '</p><span class="entry-count">' + esc(e.c) + "</span></a>";
+    }).join("") + "</div>";
+    html += '<div class="entry-list">' + rest.map(function (e) {
+      return '<a class="entry-line" href="' + e.href + '"><span class="el-title">' + esc(e.t) + '</span><span class="el-desc">' + esc(e.d) + '</span><span class="el-count">' + esc(e.c) + "</span></a>";
     }).join("") + "</div></div></section>";
 
     html += sectionOpen() + sectionHead("02", "怎么用这份资料", "先定位需要的部分，再核对出处；冲突和未获取项都不做取舍。");
-    html += '<div class="wrap--prose" style="margin:0"><ol class="small" style="line-height:2">' +
-      (meta.usage || []).map(function (u) { return "<li>" + esc(u) + "</li>"; }).join("") + "</ol></div>";
+    html += '<details class="acc"><summary>展开使用顺序（' + (meta.usage || []).length + ' 条）</summary><div class="acc-body"><ol class="small" style="line-height:2">' +
+      (meta.usage || []).map(function (u) { return "<li>" + esc(u) + "</li>"; }).join("") + "</ol></div></details>";
     html += "</div></section>";
 
     html += '<section class="section" id="actions"><div class="wrap">' + sectionHead("03", "现在就能做的十件事", "按时间分档，每条写清完成标准；做完一件再进下一件。");
@@ -386,7 +404,7 @@
           (it.tag ? ' <div style="margin-top:6px">' + badge(esc(it.tag), /经验/.test(it.tag) ? "badge--advice" : "badge--official") + "</div>" : "") +
           "</div></div>";
       }).join("");
-      return '<div class="tier"><div class="tier-label">' + esc(t.label || "") + "</div>" + items + "</div>";
+      return '<details class="acc tier"><summary><b>' + esc(t.label || "") + "</b><span class='sum-meta'>" + (t.items || []).length + " 件</span></summary><div class='acc-body'>" + items + "</div></details>";
     }).join("");
   }
 
@@ -505,12 +523,14 @@
     }
 
     if (excl.length) {
-      html += sectionOpen() + sectionHead("04", "经核实暂不招非全日制的院校", "这些院校有药学类硕士点或相关方向，但招生目录中的学习方式为全日制；列出依据，便于排除与核对。");
-      html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>院校</th><th>地区</th><th>原因</th><th>目录原文</th><th>出处</th></tr></thead><tbody>' +
-        excl.slice().sort(function (a, b) { return provinces.indexOf(a.province) - provinces.indexOf(b.province); }).map(function (e) {
-          return "<tr><td><b>" + esc(e.name) + "</b></td><td>" + esc(e.province || "") + "</td><td>" + esc(e.reason || "") +
-            '</td><td class="small">' + esc(e.evidenceRaw || "") + "</td><td>" + srcList(e.sources, { title: "" }) + "</td></tr>";
-        }).join("") + "</tbody></table></div></div></section>";
+      html += sectionOpen() + sectionHead("04", "经核实暂不招非全日制的院校", "这些院校有药学类硕士点或相关方向，但招生目录中的学习方式为全日制；列出依据，便于排除与核对，逐条展开看目录原文与出处。");
+      html += '<div class="excl-list">' + excl.slice().sort(function (a, b) { return provinces.indexOf(a.province) - provinces.indexOf(b.province); }).map(function (e) {
+        return '<details class="excl acc-item"><summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(e.name) + "</b>" +
+          '<span class="sum-sub">' + esc(e.province || "") + (e.city ? " · " + esc(e.city) : "") + " · " + esc(shortText(e.reason || "", 46)) + "</span></span>" +
+          '<span class="sum-meta">' + srcInline(e.sources, 1) + "</span></summary>" +
+          '<div class="acc-body"><p class="small" style="margin:0 0 8px"><b>目录原文</b>：' + esc(e.evidenceRaw || "未获取") + "</p>" +
+          srcList(e.sources, { title: "出处" }) + "</div></details>";
+      }).join("") + "</div></div></section>";
     }
 
     var watchHtml = renderWatchList(excl);
@@ -583,17 +603,17 @@
             }).join("") + "</tbody></table></div>";
         }
         if (pendRows.length) {
-          out += '<div class="tbl-wrap" style="margin-top:' + (yesRows.length ? "22px" : "0") + '"><table class="tbl"><caption>待核实院校 · 尚未取得近年官方目录中关于「非全日制」的明确口径</caption><thead><tr>' +
+          out += '<details class="acc" style="margin-top:' + (yesRows.length ? "20px" : "0") + '"><summary><b>待核实院校</b><span class="sum-meta">' + pendRows.length + ' 所 · 尚未取得近年官方目录中关于「非全日制」的明确口径</span></summary><div class="acc-body"><div class="tbl-wrap"><table class="tbl"><thead><tr>' +
             "<th>院校</th><th>地区</th><th>层次</th><th>目前确认到的信息</th><th>出处</th></tr></thead><tbody>" +
             pendRows.map(function (s) {
               return "<tr>" +
                 '<td><a href="#school-' + esc(s.id) + '"><b>' + esc(s.name) + "</b></a></td>" +
                 '<td class="nowrap">' + esc(s.province || "") + (s.city ? " · " + esc(s.city) : "") + "</td>" +
                 '<td class="nowrap">' + esc(s.level || "") + "</td>" +
-                '<td class="small">' + esc(s.enrollmentNote || "近年招生目录未取得非全日制口径，待核实。") + "</td>" +
-                "<td>" + srcList(s.sources, { title: "" }) + "</td>" +
+                '<td class="small">' + esc(shortText(s.enrollmentNote || "近年招生目录未取得非全日制口径，待核实。", 90)) + "</td>" +
+                "<td>" + srcInline(s.sources, 2) + "</td>" +
                 "</tr>";
-            }).join("") + "</tbody></table></div>";
+            }).join("") + "</tbody></table></div></div></details>";
         }
         tbl.innerHTML = out;
       }
@@ -608,12 +628,20 @@
   function schoolCard(s) {
     var enrCls = s.enrollment === "是" ? "badge--ok" : s.enrollment === "待核实" ? "badge--pending" : "badge--muted";
     var enrText = s.enrollment === "是" ? "招非全" : s.enrollment === "待核实" ? "待核实" : "不招非全";
-    var head = '<div class="school-head"><div class="school-title"><h3>' + esc(s.name) + "</h3>" +
+    var cy0 = findCycle(primaryProgram(s), 2027);
+    var sumMeta = [];
+    if (cy0) {
+      if (!isMissing(cy0.planCount)) sumMeta.push("拟招 " + num(cy0.planCount) + " 人");
+      if (!isMissing(cy0.tuitionTotal)) sumMeta.push(money(cy0.tuitionTotal));
+      if (!isMissing(cy0.durationYears)) sumMeta.push(esc(cy0.durationYears) + " 年");
+      if (cy0.classMode && cy0.classMode !== "未获取") sumMeta.push(esc(cy0.classMode));
+    }
+    var head = '<summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(s.name) + "</b>" +
       badge(enrText, enrCls) +
       (typeof s.priority === "number" ? '<span class="tag tag--accent">优先 ' + s.priority + "</span>" : "") +
-      "</div>" +
-      '<div class="school-sub">' + esc(s.province || "") + (s.city ? " · " + esc(s.city) : "") + (s.level ? " · " + esc(s.level) : "") +
-      (s.college ? " · " + esc(s.college) : "") + "</div></div>";
+      '<span class="sum-sub">' + esc(s.province || "") + (s.city ? " · " + esc(s.city) : "") + (s.level ? " · " + esc(s.level) : "") +
+      (s.college ? " · " + esc(s.college) : "") + "</span></span>" +
+      (sumMeta.length ? '<span class="sum-meta">' + sumMeta.join(" · ") + "</span>" : "") + "</summary>";
     var metaRow = '<div class="school-meta">' +
       '<span>适配方向：' + (s.fitTags || []).map(function (t) { return tag(t, "tag--accent"); }).join(" ") + "</span>" +
       (s.priorityReason ? "<span>排序依据：" + esc(s.priorityReason) + "</span>" : "") +
@@ -645,7 +673,7 @@
     body += missingHTML(s.missing);
     body += srcList(s.sources, { title: "本页出处" });
 
-    return '<div class="school" id="school-' + esc(s.id) + '">' + head + metaRow + body + "</div>";
+    return '<details class="school acc-item" id="school-' + esc(s.id) + '">' + head + '<div class="acc-body school-body">' + metaRow + body + "</div></details>";
   }
 
   function cycleBody(cy) {
@@ -704,16 +732,16 @@
 
     var html = sectionOpen() + sectionHead("01", "优先联系名单", "按研究方向、体系内经历与招生口径排序；排序理由只引用公开的客观条件。查不到是否招非全的，写未获取，不替院校作答。");
     if (priority.length) {
-      html += '<div class="tbl-wrap"><table class="tbl"><caption>优先联系顺序 · 共 ' + priority.length + " 位</caption><thead><tr><th>顺序</th><th>姓名</th><th>院校</th><th>职称</th><th>研究方向</th><th>体系内经历</th><th>招非全</th><th>排序理由</th></tr></thead><tbody>" +
+      html += '<div class="tbl-wrap"><table class="tbl"><caption>优先联系顺序 · 共 ' + priority.length + " 位</caption><thead><tr><th>顺序</th><th>姓名</th><th>院校</th><th>职称</th><th>研究方向</th><th>体系内经历</th><th>招非全</th></tr></thead><tbody>" +
         priority.map(function (a) {
           return "<tr><td class='num'><b>" + esc(a.contactOrder) + "</b></td>" +
-            "<td><a href='#advisor-" + esc(a.id) + "'><b>" + esc(a.name) + "</b></a></td>" +
+            "<td><a href='#advisor-" + esc(a.id) + "'><b>" + esc(a.name) + "</b></a>" +
+            (a.contactReason ? "<div class='small muted' style='margin-top:2px'>" + esc(a.contactReason) + "</div>" : "") + "</td>" +
             "<td>" + esc(a.schoolName || "") + "</td>" +
             "<td>" + esc(a.title || "") + "</td>" +
             "<td class='small'>" + (a.directionTags || []).map(function (t) { return tag(t, "tag--accent"); }).join(" ") + "</td>" +
             "<td>" + (a.backgroundTags || []).filter(function (t) { return t !== "无"; }).map(function (t) { return badge(t, "badge--official"); }).join(" ") + "</td>" +
-            "<td>" + (a.partTimeEnrollment && a.partTimeEnrollment !== "未获取" ? esc(a.partTimeEnrollment) : badge("未获取", "badge--pending")) + "</td>" +
-            "<td class='small'>" + esc(a.contactReason || "") + "</td></tr>";
+            "<td>" + (a.partTimeEnrollment && a.partTimeEnrollment !== "未获取" ? esc(a.partTimeEnrollment) : badge("未获取", "badge--pending")) + "</td></tr>";
         }).join("") + "</tbody></table></div>";
     } else {
       html += empty("优先联系顺序尚未生成。");
@@ -793,12 +821,14 @@
       ["招非全", (a.partTimeEnrollment && a.partTimeEnrollment !== "未获取") ? esc(a.partTimeEnrollment) : badge("未获取", "badge--pending")],
       ["近年非全学生", (a.recentPartTimeStudents && a.recentPartTimeStudents !== "未获取") ? esc(a.recentPartTimeStudents) : badge("未获取", "badge--pending")]
     ];
-    var html = '<div class="adv" id="advisor-' + esc(a.id) + '">' +
-      '<div class="adv-head"><h3 class="adv-name">' + esc(a.name) + "</h3>" +
+    var html = '<details class="adv acc-item" id="advisor-' + esc(a.id) + '">' +
+      '<summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(a.name) + "</b>" +
       '<span class="adv-title">' + esc(a.title || "") + "</span>" +
       (typeof a.contactOrder === "number" ? '<span class="tag tag--accent">优先 ' + esc(a.contactOrder) + "</span>" : "") +
-      " " + changeBadge(a.changeTag) + "</div>" +
-      '<div class="adv-school">' + esc(a.schoolName || "") + (a.college ? " · " + esc(a.college) : "") + "</div>" +
+      " " + changeBadge(a.changeTag) +
+      '<span class="sum-sub">' + esc(a.schoolName || "") + (a.college ? " · " + esc(a.college) : "") + "</span></span>" +
+      '<span class="sum-meta">' + (a.directionTags || []).slice(0, 3).map(function (t) { return tag(t, "tag--accent"); }).join(" ") + "</span></summary>" +
+      '<div class="acc-body">' +
       '<div class="tag-row" style="margin-bottom:8px">' + (a.directionTags || []).map(function (t) { return tag(t, "tag--accent"); }).join("") +
       bg.map(function (t) { return badge(t, "badge--official"); }).join("") +
       (a.confidence === "部分核实" ? badge("部分核实", "badge--pending") : "") + "</div>" +
@@ -815,7 +845,7 @@
     html += '<details class="acc" style="margin-top:12px"><summary>招生要求、来源与未获取项</summary><div class="acc-body">' +
       kv([["招生要求", a.enrollmentNotes ? esc(a.enrollmentNotes) : MISS]]) +
       conflictsHTML(a.conflicts) + missingHTML(a.missing) + srcList(a.sources) +
-      "</div></details></div>";
+      "</div></details></div></details>";
     return html;
   }
 
@@ -842,7 +872,7 @@
             (it.sources && it.sources.length ? srcList(it.sources, { title: "" }) : "") +
             "</div>";
         }).join("");
-        return '<div class="tl-phase"><div class="phase-head"><span class="phase-num">阶段 ' + ("0" + (pi + 1)).slice(-2) + "</span><h3>" + esc(p.title || "") + "</h3></div>" + items + "</div>";
+        return '<details class="tl-phase acc-item"' + (pi === 0 ? " open" : "") + '><summary class="phase-head"><span class="phase-num">阶段 ' + ("0" + (pi + 1)).slice(-2) + "</span><h3>" + esc(p.title || "") + "</h3><span class='sum-meta'>" + (p.items || []).length + " 条</span></summary><div class='acc-body'>" + items + "</div></details>";
       }).join("") + "</div>";
     }
     html += "</div></section>";
@@ -1001,15 +1031,17 @@
       ["公告 / 截止", val(j.announcedAt) + (isMissing(j.deadline) ? "" : " / " + esc(j.deadline))],
       ["拟录用公示", val(j.admittedRaw) + (j.admittedDegrees && j.admittedDegrees.length ? ' <span class="small muted">（学历：' + j.admittedDegrees.map(esc).join("、") + "）</span>" : "")]
     ];
-    return '<div class="job" id="gov-' + esc(j.id) + '" style="margin-top:12px">' +
-      '<div class="job-head"><h4 class="job-title">' + esc(j.position || "") + "</h4>" +
-      '<span class="job-salary">' + (isMissing(j.headcount) ? "人数未获取" : esc(j.headcount) + " 人") + "</span></div>" +
-      '<div class="job-meta">' + esc(j.unit || "") + " · " + esc(j.region || "") + (j.city ? " " + esc(j.city) : "") + (j.level ? " · " + esc(j.level) : "") +
-      (j.unitType ? " · " + esc(j.unitType) : "") + "</div>" +
+    var sub = esc(j.unit || "") + " · " + esc(j.region || "") + (j.city ? " " + esc(j.city) : "") + (j.level ? " · " + esc(j.level) : "") +
+      (j.unitType ? " · " + esc(j.unitType) : "") + (j.educationRaw && j.educationRaw !== "未获取" ? " · " + esc(j.educationRaw) : "");
+    return '<details class="job acc-item" id="gov-' + esc(j.id) + '">' +
+      '<summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(j.position || "") + "</b>" +
+      '<span class="sum-sub">' + sub + "</span></span>" +
+      '<span class="sum-meta">' + (isMissing(j.headcount) ? "人数未获取" : esc(j.headcount) + " 人") + "</span></summary>" +
+      '<div class="acc-body">' +
       '<div class="badge-row" style="margin-bottom:10px">' + social +
       (j.batch ? '<span class="badge badge--third">' + esc(j.batch) + "</span>" : "") + changeBadge(j.changeTag) + "</div>" +
       kv(rows) + (j.notes ? '<p class="small muted" style="margin-top:8px">' + esc(j.notes) + "</p>" : "") +
-      missingHTML(j.missing) + srcList(j.sources) + "</div>";
+      missingHTML(j.missing) + srcList(j.sources) + "</div></details>";
   }
 
   function renderSalaryBlock(corp) {
@@ -1070,16 +1102,18 @@
       ["经验", val(j.experience)],
       ["技能", (j.skills && j.skills.length) ? j.skills.map(function (s) { return tag(esc(s)); }).join(" ") : MISS]
     ];
-    return '<div class="job" id="corp-' + esc(j.id) + '">' +
-      '<div class="job-head"><h3 class="job-title">' + esc(j.title || "") + "</h3>" +
-      '<span class="job-salary">' + val(j.salaryRaw) + "</span></div>" +
-      '<div class="job-meta">' + esc(j.company || "") + " · " + esc(j.city || "") + (j.companyType ? " · " + esc(j.companyType) : "") + " " + changeBadge(j.changeTag) + "</div>" +
+    return '<details class="job acc-item" id="corp-' + esc(j.id) + '">' +
+      '<summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(j.title || "") + "</b>" +
+      '<span class="sum-sub">' + esc(j.company || "") + " · " + esc(j.city || "") + (j.companyType ? " · " + esc(j.companyType) : "") +
+      (j.education ? " · " + esc(j.education) : "") + "</span></span>" +
+      '<span class="sum-meta">' + val(j.salaryRaw) + "</span></summary>" +
+      '<div class="acc-body">' +
       '<p class="job-desc">' + val(j.description) + "</p>" + kv(rows) +
       '<p class="small" style="margin:10px 0 0">' + badge(j.sourceType === "official" ? "官方" : "第三方", j.sourceType === "official" ? "badge--official" : "badge--third") +
       " 来源：" + esc(j.platform || "") + (j.publishedAt ? " · " + esc(j.publishedAt) : "") +
       (j.url ? ' · <a href="' + esc(j.url) + '" target="_blank" rel="noopener">查看原页</a>' : "") + "</p>" +
       (j.notes ? '<p class="small muted" style="margin:4px 0 0">' + esc(j.notes) + "</p>" : "") +
-      missingHTML(j.missing) + "</div>";
+      missingHTML(j.missing) + "</div></details>";
   }
 
   /* ==========================================================================
@@ -1097,11 +1131,11 @@
         var tl = (c.timeline || []).length ? '<ul class="cert-timeline">' + c.timeline.map(function (t) {
           return "<li><span class='when'>" + esc(t.when || "") + "</span>" + esc(t.event || "") + "</li>";
         }).join("") + "</ul>" : MISS;
-        return '<div class="card" id="cert-' + esc(c.id) + '">' +
-          '<div class="card-head"><h3 class="card-title">' + esc(c.name || "") + "</h3>" +
-          '<span class="card-sub">' + badge(c.category || "", "badge--muted") + "</span></div>" +
-          '<div class="card-body">' +
-          '<p class="small muted" style="margin-bottom:10px">发证 / 主管：' + val(c.issuer) + "</p>" +
+        return '<details class="card cert acc-item" id="cert-' + esc(c.id) + '">' +
+          '<summary class="acc-sum"><span class="sum-main"><b class="sum-name">' + esc(c.name || "") + "</b>" +
+          '<span class="sum-sub">' + (isMissing(c.issuer) ? "" : esc(c.issuer)) + "</span></span>" +
+          '<span class="sum-meta">' + badge(c.category || "", "badge--muted") + "</span></summary>" +
+          '<div class="acc-body">' +
           kv([
             ["报考条件", val(c.conditionRaw)],
             ["时间窗口", tl],
@@ -1111,7 +1145,7 @@
             ["费用", val(c.costRaw)]
           ]) +
           (c.notes ? '<p class="small muted" style="margin-top:10px">' + esc(c.notes) + "</p>" : "") +
-          missingHTML(c.missing) + srcList(c.sources) + "</div></div>";
+          missingHTML(c.missing) + srcList(c.sources) + "</div></details>";
       }).join("") + "</div>";
     }
     if (D.certs && D.certs.meta && D.certs.meta.disclaimer) {
@@ -1141,14 +1175,14 @@
       cats.forEach(function (cat) {
         var list = missing.filter(function (m) { return m.cat === cat; });
         if (!list.length) return;
-        html += '<h3 style="margin:26px 0 10px">' + esc(cat) + " · " + list.length + " 条</h3>";
-        html += '<div class="tbl-wrap"><table class="tbl tbl--compact"><thead><tr><th>记录</th><th>未获取 / 待核实字段</th></tr></thead><tbody>' +
+        html += '<details class="acc" style="margin-top:10px"><summary><b>' + esc(cat) + "</b><span class='sum-meta'>" + list.length + " 条</span></summary><div class='acc-body'>" +
+          '<div class="tbl-wrap"><table class="tbl tbl--compact"><thead><tr><th>记录</th><th>未获取 / 待核实字段</th></tr></thead><tbody>' +
           list.map(function (m) {
             var page = cat === "导师" ? "advisors.html" : cat === "证书职称" ? "certs.html" : cat === "时间窗口" ? "timeline.html" : "schools.html";
             if (cat === "事业单位岗位" || cat === "企业岗位") page = "jobs.html";
-            return "<tr><td>" + anchorLink(page, m.anchor, m.label) + "</td><td><ul style='margin:0;padding-left:1.1em'>" +
-              m.fields.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") + "</ul></td></tr>";
-          }).join("") + "</tbody></table></div>";
+            return "<tr><td>" + anchorLink(page, m.anchor, m.label) + "</td><td class='small'>" +
+              m.fields.map(function (f) { return esc(f); }).join("、") + "</td></tr>";
+          }).join("") + "</tbody></table></div></div></details>";
       });
       html += '<p class="small muted" style="margin-top:16px">共 ' + missing.length + " 条记录、";
       html += missing.reduce(function (n, m) { return n + m.fields.length; }, 0) + ' 个字段待核实。</p>';
@@ -1184,14 +1218,14 @@
         list.push(s);
       });
       if (!list.length) return;
-      html += '<h3 style="margin:28px 0 10px">' + esc(g.label) + " · " + list.length + " 条</h3>";
+      html += '<details class="acc" style="margin-top:10px"><summary><b>' + esc(g.label) + "</b><span class='sum-meta'>" + list.length + " 条</span></summary><div class='acc-body'>";
       html += '<div class="tbl-wrap"><table class="tbl tbl--compact"><thead><tr><th>标题</th><th>发布者</th><th>类型</th><th>发布</th><th>查阅</th></tr></thead><tbody>' +
         list.map(function (s) {
           return "<tr><td><a href='" + esc(s.url) + "' target='_blank' rel='noopener'>" + esc(s.title) + "</a>" +
             (s.note ? "<div class='small muted'>" + esc(s.note) + "</div>" : "") + "</td>" +
             "<td>" + esc(s.publisher || "") + "</td><td>" + srcTypeBadge(s) + "</td><td class='num'>" + esc(s.published || "未知") +
             "</td><td class='num'>" + esc(s.accessed || "") + "</td></tr>";
-        }).join("") + "</tbody></table></div>";
+        }).join("") + "</tbody></table></div></div></details>";
     });
     html += "</div></section>";
 
@@ -1228,6 +1262,113 @@
      启动
      ========================================================================== */
 
+  /* ---------- 阅读层级：本页目录、分区折叠、锚点自动展开 ---------- */
+  var PAGE_OPEN = {
+    index: [1], schools: [0], advisors: [0], timeline: [0], jobs: [0],
+    certs: [0], sources: [0], changelog: [0],
+    route: [0, 1], outreach: [0], internal: [0], agreement: [0]
+  };
+
+  function openAncestors(el) {
+    while (el && el !== document.body) {
+      if (el.tagName === "DETAILS") el.open = true;
+      el = el.parentElement;
+    }
+  }
+
+  function buildToc() {
+    var main = $("#main") || $("main");
+    if (!main) return;
+    var secs = $$("main .section").filter(function (x) { return $(".section-head h2", x); });
+    if (secs.length < 2) return;
+    var links = secs.map(function (sec, i) {
+      if (!sec.id) sec.id = "sec-" + (i + 1);
+      var h = $(".section-head h2", sec);
+      var num = $(".section-num", sec);
+      var label = (num ? num.textContent.trim() + " " : "") + h.textContent.trim();
+      return '<a href="#' + sec.id + '">' + esc(label) + "</a>";
+    }).join("");
+    var bar = document.createElement("div");
+    bar.className = "toc-bar";
+    bar.innerHTML = '<div class="wrap toc"><span class="toc-label">本页</span>' + links +
+      '<button type="button" class="toc-btn" id="toc-all">展开全部</button></div>';
+    var nav = $(".site-nav");
+    if (nav) nav.parentNode.insertBefore(bar, nav.nextSibling); else main.parentNode.insertBefore(bar, main);
+    if (nav) bar.style.top = nav.offsetHeight + "px";
+    bar.querySelector("#toc-all").addEventListener("click", function () {
+      var all = $$("details.sec-acc");
+      var anyClosed = all.some(function (d) { return !d.open; });
+      all.forEach(function (d) { d.open = anyClosed; });
+      this.textContent = anyClosed ? "收起全部" : "展开全部";
+    });
+    bar.addEventListener("click", function (e) {
+      var a = e.target.closest ? e.target.closest("a[href^='#']") : null;
+      if (!a) return;
+      var t = null;
+      try { t = $(a.getAttribute("href")); } catch (err) { t = null; }
+      if (t) { var inner = t.querySelector("details.sec-acc"); if (inner) inner.open = true; openAncestors(t); }
+    });
+  }
+
+  function collapseSections(opened) {
+    var list = opened || [];
+    var secs = $$("main .section");
+    if (secs.length < 2) return;
+    secs.forEach(function (sec, idx) {
+      var wrap = $(".wrap", sec);
+      if (!wrap) return;
+      var head = $(".section-head", wrap);
+      if (!head) return;
+      var d = document.createElement("details");
+      d.className = "sec-acc";
+      if (list.indexOf(idx) >= 0) d.open = true;
+      var sum = document.createElement("summary");
+      sum.className = "section-head";
+      sum.innerHTML = head.innerHTML;
+      wrap.replaceChild(d, head);
+      d.appendChild(sum);
+      var body = document.createElement("div");
+      body.className = "sec-acc-body";
+      var following = [];
+      var n = d.nextSibling;
+      while (n) { following.push(n); n = n.nextSibling; }
+      following.forEach(function (x) { body.appendChild(x); });
+      d.appendChild(body);
+    });
+  }
+
+  function hashOpen() {
+    function go() {
+      var h = location.hash;
+      if (!h || h.length < 2) return;
+      var t = null;
+      try { t = $(h); } catch (e) { t = null; }
+      if (!t) return;
+      var inner = t.querySelector("details.sec-acc");
+      if (inner) inner.open = true;
+      openAncestors(t);
+    }
+    go();
+    window.addEventListener("hashchange", go);
+  }
+
+  function enhanceLayout() {
+    var page = document.body.getAttribute("data-page") || "";
+    collapseSections(PAGE_OPEN[page] || []);
+    buildToc();
+    hashOpen();
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest ? e.target.closest("a[href^='#']") : null;
+      if (!a) return;
+      var t = null;
+      try { t = $(a.getAttribute("href")); } catch (err) { return; }
+      if (!t) return;
+      var inner = t.querySelector("details.sec-acc");
+      if (inner) inner.open = true;
+      openAncestors(t);
+    });
+  }
+
   var renderers = {
     index: renderHome,
     schools: renderSchools,
@@ -1250,6 +1391,7 @@
         if (window.console && console.error) console.error(e);
       }
     }
+    try { enhanceLayout(); } catch (e2) { if (window.console && console.error) console.error(e2); }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
