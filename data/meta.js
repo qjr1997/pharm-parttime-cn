@@ -1,8 +1,8 @@
 window.DATA = window.DATA || {};
 window.DATA.meta = {
   siteTitle: "长三角非全日制药学硕士资料库",
-  version: "2026.11",
-  updatedAt: "2026-11-15",
+  version: "2026.11.1",
+  updatedAt: "2026-11-16",
   latestAdmissionYear: 2027,
   previousAdmissionYear: 2026,
   showChangeTags: false,
@@ -16,6 +16,7 @@ window.DATA.meta = {
   ],
   disclaimer: "本资料库为公开信息汇编，不构成报考、求职或晋升建议。招生计划、考试科目、学费、招聘条件与考试日期每年调整，务必以官方最新公告为准。标为「经验建议」的内容为基于公开规则的推演，未标注官方出处。",
   changelogLatest: [
+    { date: "2026-11-16", type: "更新", text: "院校页新增「专业课对照」与「恢复招生观察名单」；浙工大 2024—2025 曾招非全、2026—2027 停招，纳入观察并补充 4 条招生目录来源。" },
     { date: "2026-11-15", type: "新建", text: "首次发布：院校 29 所、导师 51 位、岗位 111 条、证书 9 项与时间窗口与行动清单。" }
   ]
 };

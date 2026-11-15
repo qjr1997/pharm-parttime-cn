@@ -406,6 +406,73 @@
     return hit || primaryCycle(p);
   }
 
+  // 专业课对照：汇总确认招收非全日制院校的初试科目、参考书与复试科目
+  function examRows() {
+    var rows = [];
+    allSchools().forEach(function (s) {
+      if (s.enrollment !== "是") return;
+      (s.programs || []).forEach(function (p) {
+        var c = primaryCycle(p);
+        if (!c) return;
+        var subs = Array.isArray(c.examSubjects) ? c.examSubjects : [];
+        rows.push({
+          school: s.name,
+          program: [p.programCode, p.programName].filter(Boolean).join(" "),
+          foreign: subs.filter(function (x) { return /英语/.test(x); }),
+          major: subs.filter(function (x) { return !/思想政治|英语/.test(x); }),
+          books: c.referenceBooks,
+          reexam: c.reExamRaw
+        });
+      });
+    });
+    return rows;
+  }
+
+  function renderExamMatrix() {
+    var rows = examRows();
+    if (!rows.length) return "";
+    function joinCell(arr) {
+      if (!Array.isArray(arr) || !arr.length) return MISS;
+      return arr.map(esc).join("；");
+    }
+    var html = '<div class="note note--info"><div class="note-label">读表说明</div><ul>' +
+      "<li>105500 药学：确认招收非全日制的院校初试专业课均为 349 药学综合；349 由招生单位自命题，同代码在不同学校的考试范围与参考书不同，须按目标校当年考试大纲复习。</li>" +
+      "<li>086000 生物与医药：共同科目为 338 生物化学，第二门专业课由各校自命题（874 生物技术概论 / 860 细胞生物学 / 802 细胞生物学 / 803 微生物学）。</li>" +
+      "<li>外语科目按院校分英语（一）与英语（二）：英语（一）为 201，英语（二）为 204，复习与真题不可混用。</li>" +
+      "<li>参考书一栏只有江苏科技大学公布了官方书目，其余为「未获取」，已汇总到「来源与待核实」页，可直接作为电话核实清单。</li>" +
+      "</ul></div>";
+    html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>院校</th><th>专业</th><th>外语</th><th>专业课 / 参考书</th><th>复试科目</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        var books = isMissing(r.books) || !r.books ? '<span class="muted">参考书：未获取</span>'
+          : '<span class="muted">参考书：' + esc(Array.isArray(r.books) ? r.books.join("；") : r.books) + "</span>";
+        return "<tr><td><b>" + esc(r.school) + '</b></td><td class="small">' + (r.program ? esc(r.program) : MISS) +
+          '</td><td class="small nowrap">' + joinCell(r.foreign) + '</td><td class="small">' +
+          (r.major.length ? r.major.map(esc).join("；") : MISS) + "<br>" + books +
+          '</td><td class="small">' + (isMissing(r.reexam) ? MISS : esc(r.reexam)) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+    return html;
+  }
+
+  // 恢复招生观察：曾招非全、最新目录未列的院校
+  function renderWatchList(excl) {
+    var list = (excl || []).filter(function (e) { return e.watch; });
+    if (!list.length) return "";
+    return list.map(function (e) {
+      var w = e.watch || {};
+      var html = '<div class="card" style="margin-bottom:14px"><div class="card-head"><h3 class="card-title">' +
+        esc(e.name) + '</h3><span class="card-sub">' + tag(e.province || "") + tag("2026 年起停招") + "</span></div>" +
+        '<div class="card-body">' +
+        '<div class="note note--info"><div class="note-label">事实与线索</div><ul>' +
+        (w.facts || []).map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") + "</ul>" +
+        '<p class="small muted">来源见下方出处；「349 由有机化学和生物化学组成」等科目范围以当年目录备注为准。</p></div>' +
+        '<div class="note note--advice"><div class="note-label">经验建议 · 恢复招生的观察与准备</div><ul>' +
+        (w.advice || []).map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") + "</ul>" +
+        (w.basis ? '<p class="small muted">' + esc(w.basis) + "</p>" : "") + "</div>" +
+        srcList(e.sources, { title: "出处" }) + "</div></div>";
+      return html;
+    }).join("");
+  }
+
   function renderSchools() {
     var root = $("#app");
     if (!root) return;
@@ -429,13 +496,25 @@
     html += sectionOpen() + sectionHead("02", "院校详情", "每所学校下列出招生项目与各年度口径；字段旁的出处可点回原文。");
     html += '<div id="school-list"></div></div></section>';
 
+    var examHtml = renderExamMatrix();
+    if (examHtml) {
+      html += sectionOpen() + sectionHead("03", "专业课对照", "确认招收非全日制的院校，初试外语、专业课、参考书与复试科目横向对照。349 为各校自命题，参考书多数未公布，未获取项可直接作为电话核实清单。");
+      html += examHtml + "</div></section>";
+    }
+
     if (excl.length) {
-      html += sectionOpen() + sectionHead("03", "经核实暂不招非全日制的院校", "这些院校有药学类硕士点或相关方向，但招生目录中的学习方式为全日制；列出依据，便于排除与核对。");
+      html += sectionOpen() + sectionHead("04", "经核实暂不招非全日制的院校", "这些院校有药学类硕士点或相关方向，但招生目录中的学习方式为全日制；列出依据，便于排除与核对。");
       html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>院校</th><th>地区</th><th>原因</th><th>目录原文</th><th>出处</th></tr></thead><tbody>' +
         excl.slice().sort(function (a, b) { return provinces.indexOf(a.province) - provinces.indexOf(b.province); }).map(function (e) {
           return "<tr><td><b>" + esc(e.name) + "</b></td><td>" + esc(e.province || "") + "</td><td>" + esc(e.reason || "") +
             '</td><td class="small">' + esc(e.evidenceRaw || "") + "</td><td>" + srcList(e.sources, { title: "" }) + "</td></tr>";
         }).join("") + "</tbody></table></div></div></section>";
+    }
+
+    var watchHtml = renderWatchList(excl);
+    if (watchHtml) {
+      html += sectionOpen() + sectionHead("05", "恢复招生观察名单", "曾招过非全日制、但最新招生目录未列的院校单列在此：附历史口径、科目变化与观察动作；恢复招生后移回上方主表。事实与经验建议分开展示。");
+      html += watchHtml + "</div></section>";
     }
     root.innerHTML = html;
 
