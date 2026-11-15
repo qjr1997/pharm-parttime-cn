@@ -92,7 +92,7 @@ function checkSource(src, ctx, { needOfficial = false } = {}) {
 
 function checkSources(list, ctx, opt) {
   if (!A(list) || list.length === 0) { err(ctx, "缺少 sources（至少 1 条）"); return; }
-  list.forEach((s, i) => checkSource(s, `${ctx}.sources[${i}]`, opt));
+  list.forEach((s, i) => checkSource(s, `${ctx}.sources[${i}]`, {}));
   if (opt && opt.needOfficial && !list.some((s) => s.type === "official")) {
     err(ctx, "没有 official 来源，不能支撑事实性结论");
   }

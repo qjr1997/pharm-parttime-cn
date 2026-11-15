@@ -2208,9 +2208,18 @@ window.DATA.schoolsZheWan = {
           "type": "official",
           "published": "2026-09",
           "accessed": "2026-11-15"
+        },
+        {
+          "title": "浙江工业大学公布26考研药学招生情况，缩招、非全日制停招、大纲变动",
+          "publisher": "微信公众号（考研资讯）",
+          "url": "http://mp.weixin.qq.com/s?__biz=MzYyNDkzMTcwNw==&mid=2247483976&idx=1&sn=8a9e9d9b7822d18815a5c44dc6402eb3",
+          "type": "thirdparty",
+          "published": "未知",
+          "accessed": "2026-11-16",
+          "note": "第三方线索：2026 年考研起药学非全日制停招；以官方目录为准，下一轮更新优先补官方 2026 年非全目录原文"
         }
       ],
-      "updatedAt": "2026-11-15"
+      "updatedAt": "2026-11-16"
     },
     {
       "id": "zstu",
