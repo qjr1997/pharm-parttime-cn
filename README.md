@@ -71,7 +71,7 @@ node scripts/check.js
    git add .
    git commit -m "init"
    git branch -M main
-   git remote add origin https://github.com/<github-username>/pharm-parttime-cn.git
+   git remote add origin https://github.com/qjr1997/pharm-parttime-cn.git
    git push -u origin main
    ```
 
@@ -80,7 +80,7 @@ node scripts/check.js
    - Branch 选 **main**，目录选 **/(root)**
    - 点击 **Save**
 4. 等 1–2 分钟，页面顶部会显示访问地址，形如
-   `https://<github-username>.github.io/pharm-parttime-cn/`。
+   `https://qjr1997.github.io/pharm-parttime-cn/`。
 5. 之后每次更新：本地改 `data/*.js` → `git add . && git commit -m "2026.12 更新" && git push`，Pages 会自动重新发布（通常 30–60 秒）。
 6. 仓库里已有 `.nojekyll` 文件，用于关闭 Jekyll 处理；不要删除。
 
